@@ -11,7 +11,7 @@ export function registerRoutes(app: Express): Server {
 
   // Middleware to check if user is authenticated
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     next();
@@ -19,16 +19,16 @@ export function registerRoutes(app: Express): Server {
 
   // Middleware to check if user is admin
   const requireAdmin = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated() || req.user.role !== 'admin') {
+    if (!req.isAuthenticated() || !req.user || req.user.role !== 'admin') {
       return res.status(403).json({ message: "Admin access required" });
     }
     next();
   };
 
   // Student complaint routes
-  app.post("/api/complaints", requireAuth, async (req, res, next) => {
+  app.post("/api/complaints", requireAuth, async (req: any, res, next) => {
     try {
-      if (req.user.role !== 'student') {
+      if (req.user?.role !== 'student') {
         return res.status(403).json({ message: "Only students can submit complaints" });
       }
 
@@ -47,9 +47,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/complaints/my", requireAuth, async (req, res, next) => {
+  app.get("/api/complaints/my", requireAuth, async (req: any, res, next) => {
     try {
-      if (req.user.role !== 'student') {
+      if (req.user?.role !== 'student') {
         return res.status(403).json({ message: "Only students can view their complaints" });
       }
 
@@ -60,9 +60,9 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/complaints/stats/my", requireAuth, async (req, res, next) => {
+  app.get("/api/complaints/stats/my", requireAuth, async (req: any, res, next) => {
     try {
-      if (req.user.role !== 'student') {
+      if (req.user?.role !== 'student') {
         return res.status(403).json({ message: "Only students can view their stats" });
       }
 
@@ -74,7 +74,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Admin complaint routes
-  app.get("/api/complaints", requireAdmin, async (req, res, next) => {
+  app.get("/api/complaints", requireAdmin, async (req: any, res, next) => {
     try {
       const { status, category, search } = req.query;
       const filters = {
@@ -90,7 +90,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/complaints/stats", requireAdmin, async (req, res, next) => {
+  app.get("/api/complaints/stats", requireAdmin, async (req: any, res, next) => {
     try {
       const stats = await storage.getComplaintStats();
       res.json(stats);
@@ -99,7 +99,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/complaints/:id", requireAdmin, async (req, res, next) => {
+  app.get("/api/complaints/:id", requireAdmin, async (req: any, res, next) => {
     try {
       const complaint = await storage.getComplaintById(req.params.id);
       if (!complaint) {
@@ -111,7 +111,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.patch("/api/complaints/:id", requireAdmin, async (req, res, next) => {
+  app.patch("/api/complaints/:id", requireAdmin, async (req: any, res, next) => {
     try {
       const validatedData = updateComplaintSchema.parse(req.body);
       const complaint = await storage.updateComplaintStatus(req.params.id, validatedData);

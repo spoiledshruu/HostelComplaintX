@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   role: userRoleEnum("role").notNull().default("student"),
   roomNumber: text("room_number"),
+  collegeEmail: text("college_email"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -52,6 +53,11 @@ export const complaintsRelations = relations(complaints, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+}).extend({
+  collegeEmail: z.string().email("Please enter a valid college email").refine(
+    (email) => email.endsWith("@college.edu") || email.endsWith("@university.edu") || email.endsWith("@edu"),
+    "Please use your college email address"
+  ),
 });
 
 export const insertComplaintSchema = createInsertSchema(complaints).omit({

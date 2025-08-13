@@ -55,6 +55,7 @@ export default function AuthPage() {
       name: "",
       role: "student",
       roomNumber: "",
+      collegeEmail: "",
     },
   });
 
@@ -266,6 +267,25 @@ export default function AuthPage() {
                       )}
                     />
 
+                    <FormField
+                      control={registerForm.control}
+                      name="collegeEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>College Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              data-testid="input-college-email"
+                              type="email"
+                              placeholder="your.name@college.edu"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {authMode === "student" && (
                       <FormField
                         control={registerForm.control}
@@ -278,6 +298,7 @@ export default function AuthPage() {
                                 data-testid="input-room-number"
                                 placeholder="e.g., A-101"
                                 {...field}
+                                value={field.value || ""}
                               />
                             </FormControl>
                             <FormMessage />

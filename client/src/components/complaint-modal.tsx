@@ -172,6 +172,7 @@ export function ComplaintModal({ complaint, isOpen, onClose }: ComplaintModalPro
                           placeholder="Add a response for the student..."
                           className="resize-none"
                           {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />
