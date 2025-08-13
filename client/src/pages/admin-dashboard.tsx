@@ -19,8 +19,8 @@ export default function AdminDashboard() {
   const { user, logoutMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<"complaints" | "students" | "admins">("complaints");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedComplaint, setSelectedComplaint] = useState<ComplaintWithStudent | null>(null);
 
   const { data: stats } = useQuery<{
@@ -37,8 +37,8 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append("search", search);
-      if (statusFilter) params.append("status", statusFilter);
-      if (categoryFilter) params.append("category", categoryFilter);
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
+      if (categoryFilter && categoryFilter !== "all") params.append("category", categoryFilter);
       
       const response = await fetch(`/api/complaints?${params.toString()}`, {
         credentials: "include",
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="All Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Status</SelectItem>
+                        <SelectItem value="all">All Status</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="inprogress">In Progress</SelectItem>
                         <SelectItem value="resolved">Resolved</SelectItem>
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="all">All Categories</SelectItem>
                         <SelectItem value="maintenance">Maintenance</SelectItem>
                         <SelectItem value="food">Food & Catering</SelectItem>
                         <SelectItem value="cleanliness">Cleanliness</SelectItem>
