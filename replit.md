@@ -15,6 +15,12 @@ A fully functional hostel complaint management system built with React, Express.
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (August 2025)
+- **College Email Authentication**: Students now login exclusively with college emails (@iiitkottayam.ac.in)
+- **Student Registration Removed**: Students can only login, no self-registration capability
+- **Forgot Password Feature**: Students have access to contact information for password reset
+- **Sample Accounts Created**: Three college email student accounts for testing
+
 ## System Architecture
 
 ### Frontend Architecture
