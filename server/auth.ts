@@ -35,6 +35,12 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    cookie: {
+      secure: false, // Set to true only in production with HTTPS
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax'
+    },
   };
 
   app.set("trust proxy", 1);
@@ -45,10 +51,21 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log("Auth attempt - username:", username, "password length:", password?.length);
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
+        console.log("User lookup result:", user ? "found" : "not found");
+        
+        if (!user) {
+          return done(null, false, { message: "User not found" });
         }
+        
+        const passwordMatch = await comparePasswords(password, user.password);
+        console.log("Password comparison:", passwordMatch);
+        
+        if (!passwordMatch) {
+          return done(null, false, { message: "Invalid password" });
+        }
+        
         return done(null, user);
       } catch (error) {
         console.error("Auth error:", error);
@@ -93,8 +110,19 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req, res, next) => {
+    console.log("Frontend login request body:", req.body);
+    passport.authenticate("local", (err, user, info) => {
+      console.log("Passport result - err:", err, "user:", user ? "found" : "not found", "info:", info);
+      if (err) return next(err);
+      if (!user) return res.status(401).json({ message: "Authentication failed" });
+      
+      req.login(user, (err) => {
+        if (err) return next(err);
+        console.log("Login successful for user:", user.name);
+        res.status(200).json(user);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
