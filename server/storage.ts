@@ -11,6 +11,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(filters?: { role?: string; search?: string }): Promise<User[]>;
+  deleteUser(id: string): Promise<boolean>;
   
   // Complaint operations
   createComplaint(complaint: InsertComplaint & { studentId: string }): Promise<Complaint>;
@@ -63,6 +65,36 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async getAllUsers(filters?: { role?: string; search?: string }): Promise<User[]> {
+    let query = db.select().from(users);
+    
+    const conditions = [];
+    
+    if (filters?.role) {
+      conditions.push(eq(users.role, filters.role as any));
+    }
+    
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(users.name, `%${filters.search}%`),
+          ilike(users.username, `%${filters.search}%`)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(desc(users.createdAt));
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
   }
 
   async createComplaint(complaint: InsertComplaint & { studentId: string }): Promise<Complaint> {

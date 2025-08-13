@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import { insertComplaintSchema, updateComplaintSchema } from "@shared/schema";
+import { setupAuth, hashPassword } from "./auth";
+import { insertComplaintSchema, updateComplaintSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 
 export function registerRoutes(app: Express): Server {
@@ -125,6 +125,52 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
+      next(error);
+    }
+  });
+
+  // User management routes (Admin only)
+  app.get("/api/users", requireAdmin, async (req: any, res, next) => {
+    try {
+      const { role, search } = req.query;
+      const users = await storage.getAllUsers({ role: role as string, search: search as string });
+      res.json(users);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req: any, res, next) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByUsername(validatedData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const user = await storage.createUser({
+        ...validatedData,
+        password: await hashPassword(validatedData.password),
+      });
+
+      res.status(201).json(user);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      next(error);
+    }
+  });
+
+  app.delete("/api/users/:id", requireAdmin, async (req: any, res, next) => {
+    try {
+      const success = await storage.deleteUser(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.sendStatus(204);
+    } catch (error) {
       next(error);
     }
   });
